@@ -28,6 +28,15 @@ def elliptic12i(u, m):
     Returns
     -------
     Fi, Ei, Zi : complex arrays
+
+    Notes
+    -----
+    The integrand has branch points at u = pi/2 + n*pi +/- i*arccosh(1/sqrt(m)).
+    On the cuts Re(u) = pi/2 + n*pi, |Im u| > arccosh(1/sqrt(m)) the integrals
+    jump; this function returns the boundary value from Re(u) > pi/2 + n*pi
+    (the limit of the continuous branch on the right), whereas mpmath's
+    ellipf/ellipe return the limit from the left, i.e. Re F differs by
+    2K(m) - 2 Re F and Re E by 2E(m) - 2 Re E there. Off the cuts the two agree.
     """
     xp = get_xp(u, m)
     u = xp.asarray(u, dtype=xp.complex128)
