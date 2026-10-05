@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "elliptic-functions"
-version = "4.2.0"
+version = "4.2.1"
 description = "Elliptic integrals and functions — NumPy, PyTorch, JAX"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -22,10 +22,10 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage      = "https://github.com/moiseevigor/elliptic"
-Repository    = "https://github.com/moiseevigor/elliptic"
+Homepage      = "https://github.com/ohannuks/elliptic"
+Repository    = "https://github.com/ohannuks/elliptic"
 Documentation = "https://moiseevigor.github.io/elliptic/"
-"Bug Tracker" = "https://github.com/moiseevigor/elliptic/issues"
+"Bug Tracker" = "https://github.com/ohannuks/elliptic/issues"
 
 [project.optional-dependencies]
 torch = ["torch>=2.0"]

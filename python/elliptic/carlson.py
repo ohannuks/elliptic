@@ -14,7 +14,7 @@ from __future__ import annotations
 import math
 import numpy as np
 
-from ._xputils import get_xp, is_numpy
+from ._xputils import get_xp, is_jax, is_numpy
 
 
 # ---------------------------------------------------------------------------
@@ -191,22 +191,36 @@ def carlsonRJ(x, y, z, p):
     return xp.where(two0, xp.full_like(out, math.inf), out)  # DLMF 19.16.2
 
 
+def _rj_duplication_step(xp, S, fac, x, y, z, p):
+    """One Carlson duplication step for R_J (DLMF 19.36.1)."""
+    lam   = xp.sqrt(x * y) + xp.sqrt(y * z) + xp.sqrt(z * x)
+    alpha = (p * (xp.sqrt(x) + xp.sqrt(y) + xp.sqrt(z)) + xp.sqrt(x * y * z)) ** 2
+    beta  = p * (p + lam) ** 2
+    S     = S + fac * _rc_xp(xp, alpha, beta)
+    fac   = fac * 0.25
+    x = (x + lam) * 0.25
+    y = (y + lam) * 0.25
+    z = (z + lam) * 0.25
+    p = (p + lam) * 0.25
+    return S, fac, x, y, z, p
+
+
 def _rj_xp(xp, x, y, z, p):
     S   = xp.zeros_like(x)
     fac = xp.ones_like(x)
     # 100 duplications: each divides the argument-ratio exponent (base 4) by
     # one, so the series is valid for max/min argument ratios up to ~4^94 = 4e56.
     # 30 covered only ~1e16 -- RJ(1e-20, 2e-20, 3e-20, 0.5) was 11% off.
-    for _ in range(100):
-        lam   = xp.sqrt(x * y) + xp.sqrt(y * z) + xp.sqrt(z * x)
-        alpha = (p * (xp.sqrt(x) + xp.sqrt(y) + xp.sqrt(z)) + xp.sqrt(x * y * z)) ** 2
-        beta  = p * (p + lam) ** 2
-        S     = S + fac * _rc_xp(xp, alpha, beta)
-        fac   = fac * 0.25
-        x = (x + lam) * 0.25
-        y = (y + lam) * 0.25
-        z = (z + lam) * 0.25
-        p = (p + lam) * 0.25
+    # JAX: lax.fori_loop keeps a real loop in the jaxpr (a Python for-range
+    # unrolls to 100 copies and makes jit compile explode).
+    if is_jax(xp):
+        from jax.lax import fori_loop
+        def body(_i, carry):
+            return _rj_duplication_step(xp, *carry)
+        S, fac, x, y, z, p = fori_loop(0, 100, body, (S, fac, x, y, z, p))
+    else:
+        for _ in range(100):
+            S, fac, x, y, z, p = _rj_duplication_step(xp, S, fac, x, y, z, p)
     A  = (x + y + z + 2.0 * p) / 5.0
     X  = (A - x) / A
     Y  = (A - y) / A

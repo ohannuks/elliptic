@@ -30,6 +30,12 @@ def is_numpy(xp):
     return xp is np or getattr(xp, "__name__", "") in ("numpy", "array_api_compat.numpy")
 
 
+def is_jax(xp):
+    """True for jax.numpy or array_api_compat.jax.numpy."""
+    name = getattr(xp, "__name__", "")
+    return "jax" in name
+
+
 def check_range(xp, x, lo, hi, what):
     """Domain check that is honest on every backend.
 
